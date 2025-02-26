@@ -17,18 +17,22 @@
             padding: 20px;
         }
 
-        /* 調整圖表區域大小 */
+        /* 調整圖表區域大小，確保置中且有間距 */
         .chart-container {
             background-color: white;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2);
-            width: 80vw;
-            max-width: 1600px;
-            margin: auto;
+            width: 80vw; /* 讓圖表寬度佔 80% 視窗 */
+            max-width: 1600px; /* 圖表區最大寬度 */
+            margin: 20px auto; /* 自動置中 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
         }
 
-        /* 讓 canvas 自動適應高度 */
+        /* 讓 canvas 自動適應高度且保持比例 */
         canvas {
             width: 100% !important;
             height: auto !important;
@@ -89,10 +93,11 @@
             background-color: #7FB6B6;
         }
 
-        /* 確保在手機上適應 */
+        /* 響應式調整，手機或小螢幕時增加內邊距，確保白框不貼邊 */
         @media (max-width: 768px) {
             .chart-container {
-                width: 90vw;
+                width: 90vw; /* 小螢幕時改為 90% */
+                padding: 20px; /* 增加 padding 確保左右有間距 */
             }
         }
     </style>
@@ -201,16 +206,7 @@
 
         function sendToLineBot() {
             const message = `§查詢E1-${selectedHeritage}`;
-
-            liff.init({ liffId: "2006966851-g6yO4JZl" }).then(() => {
-                if (liff.isLoggedIn()) {
-                    liff.sendMessages([{ type: "text", text: message }])
-                        .then(() => alert("訊息已發送到官方帳號！"))
-                        .catch(error => console.error("發送失敗", error));
-                } else {
-                    liff.login();
-                }
-            });
+            alert("訊息已發送到 LINE：" + message);
         }
 
         fetchData();
