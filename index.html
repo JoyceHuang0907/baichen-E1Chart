@@ -17,42 +17,35 @@
             padding: 20px;
         }
 
-        /* 調整圖表區域大小，確保置中且有間距 */
+        /* 調整圖表區域大小 */
         .chart-container {
             background-color: white;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2);
             width: 80vw;
-            max-width: 1600px;
-            margin: 20px auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-sizing: border-box;
+            max-width: 1200px;
+            margin: auto;
         }
 
-        /* 修正 canvas 高度，確保桌面版與手機版都正常顯示 */
+        /* 讓 canvas 自動適應高度 */
         canvas {
             width: 100% !important;
-            height: 500px !important; /* 確保桌面版顯示 */
-            min-height: 300px !important; /* 確保手機版不會壓縮 */
+            height: auto !important;
         }
 
-        /* 在手機時，確保圖表區域不會消失 */
+        /* 在手機上確保圖表不貼邊 */
         @media (max-width: 768px) {
             .chart-container {
                 width: 90vw;
-                padding: 20px;
-            }
-
-            canvas {
-                height: 60vh !important; /* 在手機時佔 60% 螢幕高度 */
-                min-height: 300px !important;
+                margin-left: auto;
+                margin-right: auto;
+                padding-left: 10px;
+                padding-right: 10px;
             }
         }
 
-        /* Modal 樣式 */
+        /* Modal 彈出視窗樣式 */
         #myModal {
             display: none;
             position: fixed;
@@ -172,7 +165,7 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // 允許高度自適應
+                    maintainAspectRatio: false,
                     scales: {
                         x: { stacked: true },
                         y: { stacked: true }
@@ -186,7 +179,7 @@
                     onClick: (event, elements) => {
                         if (elements.length > 0) {
                             const index = elements[0].index;
-                            selectedHeritage = chartData[index].name; // 記錄選擇的古蹟名稱
+                            selectedHeritage = chartData[index].name;
                             showModal(chartData[index]);
                         }
                     }
@@ -212,7 +205,24 @@
 
         function sendToLineBot() {
             const message = `§查詢E1-${selectedHeritage}`;
-            alert("訊息已發送到 LINE：" + message);
+            
+            liff.init({ liffId: "2006966851-g6yO4JZl" }).then(() => {
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                } else {
+                    liff.sendMessages([{ type: "text", text: message }])
+                        .then(() => {
+                            alert("訊息已發送到 LINE 對話框！");
+                        })
+                        .catch(error => {
+                            console.error("發送訊息失敗", error);
+                            alert("訊息發送失敗，請檢查 LIFF 設定！");
+                        });
+                }
+            }).catch(err => {
+                console.error("LIFF 初始化失敗！", err);
+                alert("LIFF 初始化失敗，請檢查 LIFF ID！");
+            });
         }
 
         fetchData();
