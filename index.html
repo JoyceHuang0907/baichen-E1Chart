@@ -49,61 +49,6 @@
                 padding-right: 10px;
             }
         }
-
-        /* Modal 彈出視窗樣式 */
-        #myModal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 300px;
-            padding: 20px;
-            background: white;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
-            border-radius: 10px;
-            text-align: center;
-            color: black;
-        }
-
-        #modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-        }
-
-        .close-btn, .send-line-btn {
-            padding: 10px;
-            border: none;
-            cursor: pointer;
-            margin-top: 10px;
-            display: block;
-            width: 100%;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-
-        .send-line-btn {
-            background-color: #84C1FF;
-            color: white;
-        }
-        .send-line-btn:hover {
-            background-color: #6CA9EE;
-        }
-
-        .close-btn {
-            background-color: #95CACA;
-            color: white;
-        }
-        .close-btn:hover {
-            background-color: #7FB6B6;
-        }
     </style>
 </head>
 <body>
@@ -113,19 +58,9 @@
         <canvas id="myChart"></canvas>
     </div>
 
-    <!-- Modal 彈出視窗 -->
-    <div id="modal-overlay"></div>
-    <div id="myModal">
-        <h3 id="modal-title"></h3>
-        <p id="modal-content"></p>
-        <button class="send-line-btn" onclick="sendToLineBot()">詳細資料</button>
-        <button class="close-btn" onclick="closeModal()">關閉</button>
-    </div>
-
     <script>
         const webhookURL = "https://hook.us2.make.com/yvgvit9d621raudi3xojwb1ylog9a40q";
         let chartData = []; 
-        let selectedHeritage = ""; // 存儲當前選中的古蹟名稱
 
         async function fetchData() {
             try {
@@ -134,9 +69,9 @@
                 chartData = data;
 
                 const labels = data.map(item => item.name);
-                const salesData = data.map(item => item.已銷售);
-                const availableData = data.map(item => item.可銷售);
-                const builtData = data.map(item => item.已建築);
+                const salesData = data.map(item => item.已銷售 / 1000000); // 轉換為百萬元
+                const availableData = data.map(item => item.可銷售 / 1000000); // 轉換為百萬元
+                const builtData = data.map(item => item.已建築 / 1000000); // 轉換為百萬元
 
                 renderChart(labels, salesData, availableData, builtData);
             } catch (error) {
@@ -152,17 +87,17 @@
                     labels: labels,
                     datasets: [
                         {
-                            label: '可銷售容積量體金額',
+                            label: '可銷售容積量體金額 (百萬元)',
                             data: availableData,
                             backgroundColor: 'rgba(255, 99, 132, 0.7)'
                         },
                         {
-                            label: '已銷售容積量體金額',
+                            label: '已銷售容積量體金額 (百萬元)',
                             data: salesData,
                             backgroundColor: 'rgba(54, 162, 235, 0.7)'
                         },
                         {
-                            label: '非屬古蹟已建築容積',
+                            label: '非屬古蹟已建築容積 (百萬元)',
                             data: builtData,
                             backgroundColor: 'rgba(75, 192, 192, 0.7)'
                         }
@@ -173,60 +108,16 @@
                     maintainAspectRatio: false,
                     scales: {
                         x: { stacked: true },
-                        y: { stacked: true }
-                    },
-                    plugins: {
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false
-                        }
-                    },
-                    onClick: (event, elements) => {
-                        if (elements.length > 0) {
-                            const index = elements[0].index;
-                            selectedHeritage = chartData[index].name;
-                            showModal(chartData[index]);
+                        y: { 
+                            stacked: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' 百萬元';
+                                }
+                            }
                         }
                     }
                 }
-            });
-        }
-
-        function showModal(data) {
-            document.getElementById("modal-title").innerText = data.name;
-            document.getElementById("modal-content").innerHTML = `
-                <p>可銷售容積量體金額: ${data.可銷售}</p>
-                <p>已銷售容積量體金額: ${data.已銷售}</p>
-                <p>非屬古蹟已建築容積: ${data.已建築}</p>
-            `;
-            document.getElementById("modal-overlay").style.display = "block";
-            document.getElementById("myModal").style.display = "block";
-        }
-
-        function closeModal() {
-            document.getElementById("modal-overlay").style.display = "none";
-            document.getElementById("myModal").style.display = "none";
-        }
-
-        function sendToLineBot() {
-            const message = `§查詢E1-${selectedHeritage}`;
-            
-            liff.init({ liffId: "2006966851-g6yO4JZl" }).then(() => {
-                if (!liff.isLoggedIn()) {
-                    liff.login();
-                } else {
-                    liff.sendMessages([{ type: "text", text: message }])
-                        .then(() => {
-                            alert("訊息已發送到 LINE 對話框！");
-                        })
-                        .catch(error => {
-                            console.error("發送訊息失敗", error);
-                            alert("訊息發送失敗，請檢查 LIFF 設定！");
-                        });
-                }
-            }).catch(err => {
-                console.error("LIFF 初始化失敗！", err);
-                alert("LIFF 初始化失敗，請檢查 LIFF ID！");
             });
         }
 
