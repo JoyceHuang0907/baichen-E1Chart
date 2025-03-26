@@ -224,7 +224,31 @@
                 } else {
                     liff.sendMessages([{ type: "text", text: message }])
                         .then(() => {
-                            alert("訊息已發送到 LINE 對話框！");
+                            // 創建自定義提示框
+                            const confirmDiv = document.createElement('div');
+                            confirmDiv.style.position = 'fixed';
+                            confirmDiv.style.zIndex = '2000';
+                            confirmDiv.style.left = '50%';
+                            confirmDiv.style.top = '50%';
+                            confirmDiv.style.transform = 'translate(-50%, -50%)';
+                            confirmDiv.style.background = 'white';
+                            confirmDiv.style.padding = '20px';
+                            confirmDiv.style.borderRadius = '10px';
+                            confirmDiv.style.boxShadow = '0px 0px 10px rgba(0, 0, 0, 0.5)';
+                            confirmDiv.style.textAlign = 'center';
+                            confirmDiv.style.color = 'black';
+                            confirmDiv.style.minWidth = '250px';
+                            
+                            confirmDiv.innerHTML = `
+                                <p style="margin-bottom: 20px;">訊息已發送到 LINE 對話框！</p>
+                                <button id="customConfirm" style="padding: 10px 20px; background-color: #95CACA; color: white; border: none; border-radius: 5px; cursor: pointer;">確定</button>
+                            `;
+                            
+                            document.body.appendChild(confirmDiv);
+                            
+                            document.getElementById('customConfirm').onclick = function() {
+                                document.body.removeChild(confirmDiv);
+                            };
                         })
                         .catch(error => {
                             console.error("發送訊息失敗", error);
