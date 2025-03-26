@@ -134,10 +134,10 @@
                 chartData = data;
 
                 const labels = data.map(item => item.name);
-                // 將原始金額轉換為百萬單位
+                // 將原始金額轉換為百萬單位，但非屬古蹟已建築容積在圖表上仍顯示成百萬
                 const salesData = data.map(item => item.已銷售 / 1000000);
                 const availableData = data.map(item => item.可銷售 / 1000000);
-                const builtData = data.map(item => item.已建築 / 1000000);
+                const builtData = data.map(item => item.已建築 / 1000000); // 圖表比例保持一致
 
                 renderChart(labels, salesData, availableData, builtData);
             } catch (error) {
@@ -185,7 +185,26 @@
                     plugins: {
                         tooltip: {
                             mode: 'index',
-                            intersect: false
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        if (label.includes('非屬古蹟已建築容積')) {
+                                            // 對於建築容積，顯示原始值和㎡單位
+                                            const originalValue = chartData[context.dataIndex].已建築;
+                                            label += `${Number(originalValue).toFixed(2)} ㎡`;
+                                        } else {
+                                            // 其他數據仍顯示百萬元單位
+                                            label += `${context.parsed.y.toFixed(2)} 百萬元`;
+                                        }
+                                    }
+                                    return label;
+                                }
+                            }
                         }
                     },
                     onClick: (event, elements) => {
@@ -204,7 +223,7 @@
             document.getElementById("modal-content").innerHTML = `
                 <p>可銷售容積量體金額: ${(data.可銷售 / 1000000).toFixed(2)} 百萬元</p>
                 <p>已銷售容積量體金額: ${(data.已銷售 / 1000000).toFixed(2)} 百萬元</p>
-                <p>非屬古蹟已建築容積: ${(data.已建築 / 1000000).toFixed(2)} 百萬元</p>
+                <p>非屬古蹟已建築容積: ${Number(data.已建築).toFixed(2)} ㎡</p>
             `;
             document.getElementById("modal-overlay").style.display = "block";
             document.getElementById("myModal").style.display = "block";
