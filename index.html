@@ -27,6 +27,7 @@
             max-width: 1600px;
             margin: 20px auto;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             box-sizing: border-box;
@@ -104,12 +105,38 @@
         .close-btn:hover {
             background-color: #7FB6B6;
         }
+
+        /* 單位切換按鈕樣式 */
+        .unit-toggle {
+            display: flex;
+            margin-bottom: 15px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .unit-btn {
+            padding: 8px 15px;
+            border: none;
+            background-color: #ddd;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .unit-btn.active {
+            background-color: #84C1FF;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <h2>E1古蹟容積庫存管理圖表</h2>
 
     <div class="chart-container">
+        <div class="unit-toggle">
+            <button id="wanYuan" class="unit-btn active">萬元</button>
+            <button id="yuan" class="unit-btn">元</button>
+        </div>
         <canvas id="myChart"></canvas>
     </div>
 
@@ -126,28 +153,46 @@
         const webhookURL = "https://hook.us2.make.com/yvgvit9d621raudi3xojwb1ylog9a40q";
         let chartData = []; 
         let selectedHeritage = ""; // 存儲當前選中的古蹟名稱
+        let myChart = null; // 保存圖表實例以便更新
+        let currentUnit = "萬元"; // 預設單位
+
+        // 用於格式化數字的函數，增加千分符號
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
 
         async function fetchData() {
             try {
                 const response = await fetch(webhookURL);
                 const data = await response.json();
                 chartData = data;
-
-                const labels = data.map(item => item.name);
-                // 將原始金額轉換為百萬單位，但非屬古蹟已建築容積在圖表上仍顯示成百萬
-                const salesData = data.map(item => item.已銷售 / 1000000);
-                const availableData = data.map(item => item.可銷售 / 1000000);
-                const builtData = data.map(item => item.已建築 / 1000000); // 圖表比例保持一致
-
-                renderChart(labels, salesData, availableData, builtData);
+                
+                renderChartWithUnit(currentUnit);
             } catch (error) {
                 console.error("數據獲取失敗", error);
             }
         }
 
-        function renderChart(labels, salesData, availableData, builtData) {
+        function renderChartWithUnit(unit) {
+            // 根據單位設定轉換因子
+            const factor = unit === "萬元" ? 10000 : 1;
+            
+            const labels = chartData.map(item => item.name);
+            const salesData = chartData.map(item => item.已銷售 / factor);
+            const availableData = chartData.map(item => item.可銷售 / factor);
+            const builtData = chartData.map(item => item.已建築 / factor); // 圖表比例保持一致
+
+            // 如果圖表已存在，先銷毀它
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            renderChart(labels, salesData, availableData, builtData, unit);
+        }
+
+        function renderChart(labels, salesData, availableData, builtData, unit) {
             const ctx = document.getElementById('myChart').getContext('2d');
-            new Chart(ctx, {
+            myChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
@@ -178,7 +223,7 @@
                             stacked: true,
                             title: {
                                 display: true,
-                                text: '百萬元'
+                                text: unit
                             }
                         }
                     },
@@ -196,10 +241,10 @@
                                         if (label.includes('非屬古蹟已建築容積')) {
                                             // 對於建築容積，顯示原始值和㎡單位
                                             const originalValue = chartData[context.dataIndex].已建築;
-                                            label += `${Number(originalValue).toFixed(2)} ㎡`;
+                                            label += `${formatNumber(Number(originalValue).toFixed(2))} ㎡`;
                                         } else {
-                                            // 其他數據仍顯示百萬元單位
-                                            label += `${context.parsed.y.toFixed(2)} 百萬元`;
+                                            // 其他數據顯示當前選擇的單位
+                                            label += `${formatNumber(context.parsed.y.toFixed(2))} ${unit}`;
                                         }
                                     }
                                     return label;
@@ -211,19 +256,21 @@
                         if (elements.length > 0) {
                             const index = elements[0].index;
                             selectedHeritage = chartData[index].name;
-                            showModal(chartData[index]);
+                            showModal(chartData[index], unit);
                         }
                     }
                 }
             });
         }
 
-        function showModal(data) {
+        function showModal(data, unit) {
+            const factor = unit === "萬元" ? 10000 : 1;
+            
             document.getElementById("modal-title").innerText = data.name;
             document.getElementById("modal-content").innerHTML = `
-                <p>可銷售容積量體金額: ${(data.可銷售 / 1000000).toFixed(2)} 百萬元</p>
-                <p>已銷售容積量體金額: ${(data.已銷售 / 1000000).toFixed(2)} 百萬元</p>
-                <p>非屬古蹟已建築容積: ${Number(data.已建築).toFixed(2)} ㎡</p>
+                <p>可銷售容積量體金額: ${formatNumber((data.可銷售 / factor).toFixed(2))} ${unit}</p>
+                <p>已銷售容積量體金額: ${formatNumber((data.已銷售 / factor).toFixed(2))} ${unit}</p>
+                <p>非屬古蹟已建築容積: ${formatNumber(Number(data.已建築).toFixed(2))} ㎡</p>
             `;
             document.getElementById("modal-overlay").style.display = "block";
             document.getElementById("myModal").style.display = "block";
@@ -279,6 +326,21 @@
                 alert("LIFF 初始化失敗，請檢查 LIFF ID！");
             });
         }
+
+        // 設置單位切換按鈕的點擊事件
+        document.getElementById('wanYuan').addEventListener('click', function() {
+            document.getElementById('wanYuan').classList.add('active');
+            document.getElementById('yuan').classList.remove('active');
+            currentUnit = "萬元";
+            renderChartWithUnit(currentUnit);
+        });
+
+        document.getElementById('yuan').addEventListener('click', function() {
+            document.getElementById('yuan').classList.add('active');
+            document.getElementById('wanYuan').classList.remove('active');
+            currentUnit = "元";
+            renderChartWithUnit(currentUnit);
+        });
 
         fetchData();
     </script>
