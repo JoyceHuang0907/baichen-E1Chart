@@ -180,7 +180,7 @@
             const labels = chartData.map(item => item.name);
             const salesData = chartData.map(item => item.已銷售 / factor);
             const availableData = chartData.map(item => item.可銷售 / factor);
-            const builtData = chartData.map(item => item.已建築 / factor); // 圖表比例保持一致
+            const builtData = chartData.map(item => item.已建築 / factor); // 現在也會根據單位轉換
 
             // 如果圖表已存在，先銷毀它
             if (myChart) {
@@ -198,17 +198,17 @@
                     labels: labels,
                     datasets: [
                         {
-                            label: '可銷售容積量體金額',
-                            data: availableData,
-                            backgroundColor: 'rgba(255, 99, 132, 0.7)'
-                        },
-                        {
                             label: '已銷售容積量體金額',
                             data: salesData,
                             backgroundColor: 'rgba(54, 162, 235, 0.7)'
                         },
                         {
-                            label: '非屬古蹟已建築容積',
+                            label: '可銷售容積量體金額',
+                            data: availableData,
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)'
+                        },
+                        {
+                            label: '非屬古蹟量體金額',
                             data: builtData,
                             backgroundColor: 'rgba(75, 192, 192, 0.7)'
                         }
@@ -238,14 +238,8 @@
                                         label += ': ';
                                     }
                                     if (context.parsed.y !== null) {
-                                        if (label.includes('非屬古蹟已建築容積')) {
-                                            // 對於建築容積，顯示原始值和㎡單位
-                                            const originalValue = chartData[context.dataIndex].已建築;
-                                            label += `${formatNumber(Number(originalValue).toFixed(2))} ㎡`;
-                                        } else {
-                                            // 其他數據顯示當前選擇的單位
-                                            label += `${formatNumber(context.parsed.y.toFixed(2))} ${unit}`;
-                                        }
+                                        // 所有數據都顯示當前選擇的單位
+                                        label += `${formatNumber(context.parsed.y.toFixed(2))} ${unit}`;
                                     }
                                     return label;
                                 }
@@ -270,7 +264,7 @@
             document.getElementById("modal-content").innerHTML = `
                 <p>可銷售容積量體金額: ${formatNumber((data.可銷售 / factor).toFixed(2))} ${unit}</p>
                 <p>已銷售容積量體金額: ${formatNumber((data.已銷售 / factor).toFixed(2))} ${unit}</p>
-                <p>非屬古蹟已建築容積: ${formatNumber(Number(data.已建築).toFixed(2))} ㎡</p>
+                <p>非屬古蹟量體金額: ${formatNumber((data.已建築 / factor).toFixed(2))} ${unit}</p>
             `;
             document.getElementById("modal-overlay").style.display = "block";
             document.getElementById("myModal").style.display = "block";
@@ -306,7 +300,7 @@
                             confirmDiv.style.minWidth = '250px';
                             
                             confirmDiv.innerHTML = `
-                                <p style="margin-bottom: 20px;">訊息已發送到 LINE 對話框！</p>
+                                <p style="margin-bottom: 20px;">訊息已發送到 LINE 對話框!</p>
                                 <button id="customConfirm" style="padding: 10px 20px; background-color: #95CACA; color: white; border: none; border-radius: 5px; cursor: pointer;">確定</button>
                             `;
                             
@@ -318,12 +312,12 @@
                         })
                         .catch(error => {
                             console.error("發送訊息失敗", error);
-                            alert("訊息發送失敗，請檢查 LIFF 設定！");
+                            alert("訊息發送失敗,請檢查 LIFF 設定!");
                         });
                 }
             }).catch(err => {
-                console.error("LIFF 初始化失敗！", err);
-                alert("LIFF 初始化失敗，請檢查 LIFF ID！");
+                console.error("LIFF 初始化失敗!", err);
+                alert("LIFF 初始化失敗,請檢查 LIFF ID!");
             });
         }
 
